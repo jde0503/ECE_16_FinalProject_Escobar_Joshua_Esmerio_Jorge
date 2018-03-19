@@ -1,3 +1,5 @@
+#include <CurieBLE.h>
+
 /******************************************************************************
 * Authors: Joshua Escobar, PID: A11606542
 *          Jorge Esmerio, PID: A11459879
