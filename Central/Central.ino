@@ -19,7 +19,7 @@ const int LEFT_INNER_MOTOR = 4;
 const int LEFT_OUTER_MOTOR = 5;
 const int RIGHT_INNER_MOTOR = 6;
 const int RIGHT_OUTER_MOTOR = 7;
-String commandString;
+char commandValue;
 
 
 void setup() {
@@ -115,20 +115,20 @@ void loop() {
                     if (newCommand.intValue()) {
                         // Read command.
                         command.read();
-                        commandString = command.stringValue();
+                        commandValue = command.charValue();
 
                         // If debugging, print status update.
                         if (Serial) {
                             Serial.print("Received new commmand: ");
-                            Serial.println(commandString);
+                            Serial.println(commandValue);
 
                         }
 
-                        switch (commandString[0]) {
+                        switch (commandValue) {
                             case 'F':
                                 digitalWrite(LEFT_OUTER_MOTOR, LOW);
                                 digitalWrite(RIGHT_OUTER_MOTOR, LOW);
-                                delay(BASE_PULSE_DURATION * commandString[1]);
+                                delay(BASE_PULSE_DURATION);
                                 digitalWrite(LEFT_OUTER_MOTOR, HIGH);
                                 digitalWrite(RIGHT_OUTER_MOTOR, HIGH);
 
@@ -137,13 +137,12 @@ void loop() {
 
                                 // If debugging, print status update.
                                 if (Serial) {
-                                    Serial.print("Walking Forward at Level ");
-                                    Serial.println(commandString[1]);
+                                    Serial.println("Walking Forward");
                                 }
                             case 'B':
                                 digitalWrite(LEFT_INNER_MOTOR, LOW);
                                 digitalWrite(RIGHT_INNER_MOTOR, LOW);
-                                delay(BASE_PULSE_DURATION * commandString[1]);
+                                delay(BASE_PULSE_DURATION);
                                 digitalWrite(LEFT_INNER_MOTOR, HIGH);
                                 digitalWrite(RIGHT_INNER_MOTOR, HIGH);
 
@@ -152,8 +151,7 @@ void loop() {
 
                                 // If debugging, print status update.
                                 if (Serial) {
-                                    Serial.print("Walking Backward at Level ");
-                                    Serial.println(commandString[1]);
+                                    Serial.println("Walking Backward");
                                 }
 
                             case 'L':
@@ -259,7 +257,7 @@ void loop() {
                 else {
                     // If debugging, print status update.
                     if (Serial) {
-                        Serial.println("Improper Permissions Settings Detected!");
+                        Serial.println("Improper permissions settings detected!");
                     }
                 }
             }
