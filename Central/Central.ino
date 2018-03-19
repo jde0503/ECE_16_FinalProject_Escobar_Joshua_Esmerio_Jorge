@@ -14,7 +14,7 @@
 
 
 // Declare and initialize global variables and constants.
-const int BASE_PULSE_DURATION = 250; // 250 ms = 1/4 s
+const int BASE_PULSE_DURATION = 500; // 250 ms = 1/4 s
 const int LEFT_INNER_MOTOR = 4;
 const int LEFT_OUTER_MOTOR = 5;
 const int RIGHT_INNER_MOTOR = 6;
