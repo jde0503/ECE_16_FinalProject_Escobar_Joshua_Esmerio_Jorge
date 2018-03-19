@@ -14,7 +14,7 @@
 
 
 // Declare and initialize global variables and constants.
-const int BASE_PULSE_DURATION = 500; // 250 ms = 1/4 s
+const int BASE_PULSE_DURATION = 250; // 250 ms = 1/4 s
 const int LEFT_INNER_MOTOR = 4;
 const int LEFT_OUTER_MOTOR = 5;
 const int RIGHT_INNER_MOTOR = 6;
@@ -47,7 +47,7 @@ void setup() {
         Serial.println("BLE Central Initialized");
         Serial.println("Central scanning for Peripheral UUID...");
     }
-    // Scan/look for a Peripheral
+    // Scan/look for a Peripheralyy
     BLE.scanForUuid("861c36f6-2701-11e8-b467-0ed5f89f718b");
     //******************************************************************
 }
@@ -137,7 +137,7 @@ void loop() {
 
                                 // If debugging, print status update.
                                 if (Serial) {
-                                    Serial.println("Walking Forward");
+                                    Serial.print("Walking Forward.");
                                 }
                             case 'B':
                                 digitalWrite(LEFT_INNER_MOTOR, LOW);
@@ -151,7 +151,7 @@ void loop() {
 
                                 // If debugging, print status update.
                                 if (Serial) {
-                                    Serial.println("Slowing Down");
+                                    Serial.print("Slowing Down");
                                 }
 
                             case 'L':
