@@ -151,7 +151,7 @@ void loop() {
 
                                 // If debugging, print status update.
                                 if (Serial) {
-                                    Serial.println("Walking Backward");
+                                    Serial.println("Slowing Down");
                                 }
 
                             case 'L':
