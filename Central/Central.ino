@@ -1,6 +1,7 @@
 /******************************************************************************
-* Author: Joshua Escobar, PID: A11606542
-* Class:  ECE 16
+* Authors: Joshua Escobar, PID: A11606542
+*          Jorge Esmerio, PID: A11459879
+* Class: ECE 16
 * Lab: Final Project
 *
 * File Name: Central.ino
@@ -11,126 +12,264 @@
 // Include necessary libraries.
 #include <CurieBLE.h>
 
+
+// Declare and initialize global variables and constants.
+const int BASE_PULSE_DURATION = 250; // 250 ms = 1/4 s
+const int LEFT_INNER_MOTOR = 4;
+const int LEFT_OUTER_MOTOR = 5;
+const int RIGHT_INNER_MOTOR = 6;
+const int RIGHT_OUTER_MOTOR = 7;
+String commandString;
+
+
 void setup() {
-  // Establish Serial Connection
-  Serial.begin(9600);
-  // Wait for connection to establish
-  while(!Serial);
-  Serial.println("Serial Established.");
-  //**************************** BLE Code ****************************
-  // Initiliaze the BLE hardware
-  BLE.begin();
-  Serial.println("BLE Central Initialized");
-  // Scan/look for a Peripheral
-  Serial.println("Central scanning for Peripheral UUID...");
-  BLE.scanForUuid("861c398a-2701-11e8-b467-0ed5f89f718b");
-  //******************************************************************
+    // Establish Serial Connection
+    Serial.begin(9600);
+
+    // Set up pins.
+    pinMode(LEFT_INNER_MOTOR, OUTPUT);
+    pinMode(LEFT_OUTER_MOTOR, OUTPUT);
+    pinMode(RIGHT_INNER_MOTOR, OUTPUT);
+    pinMode(RIGHT_OUTER_MOTOR, OUTPUT);
+
+    // Initialize pin state. HIGH for motors is off.
+    digitalWrite(LEFT_INNER_MOTOR, HIGH);
+    digitalWrite(LEFT_OUTER_MOTOR, HIGH);
+    digitalWrite(RIGHT_INNER_MOTOR, HIGH);
+    digitalWrite(RIGHT_OUTER_MOTOR, HIGH);
+
+    //**************************** BLE Code ****************************
+    // Initiliaze the BLE hardware
+    BLE.begin();
+
+    // If debugging, print status update.
+    if (Serial) {
+        Serial.println("BLE Central Initialized");
+        Serial.println("Central scanning for Peripheral UUID...");
+    }
+    // Scan/look for a Peripheral
+    BLE.scanForUuid("861c36f6-2701-11e8-b467-0ed5f89f718b");
+    //******************************************************************
 }
 
+
 void loop() {
-  // check if a peripheral has been discovered
-  BLEDevice peripheral_BLE = BLE.available();
-  if (peripheral_BLE) {
-    // Discovered a peripheral, local name, and advertised service
-    Serial.print("Found Peripheral: ");
-    Serial.println(peripheral_BLE.localName());
-    // Connect to peripheral
-    peripheral_BLE.connect();
+    // Check if a peripheral has been discovered.
+    BLEDevice peripheral_BLE = BLE.available();
 
-
-    // If connected to peripheral
-    if (peripheral_BLE.connected()){
-      Serial.println("Periperipheral Connected");
-      // Stop scanning
-      Serial.println("Stopped Scanning for Peripheral");
-      BLE.stopScan();
-
-      // Discover the peripheral's attributes
-      Serial.println("Discovering the Peripheral's Attributes");
-      peripheral_BLE.discoverAttributes();
-      if (Serial) {
-        Serial.print("Service Count: ");
-        Serial.println(peripheral_BLE.serviceCount());
-      }
-      // Peripheral services
-      BLEService accel_serv = peripheral_BLE.service("861c36f6-2701-11e8-b467-0ed5f89f718b");
-      BLEService gyro_serv = peripheral_BLE.service("861c398a-2701-11e8-b467-0ed5f89f718b");
-      BLEService emg_serv = peripheral_BLE.service("861c3b6a-2701-11e8-b467-0ed5f89f718b");
-      if (Serial) {
-        Serial.print("Accel Char Count: ");
-        Serial.print(accel_serv.characteristicCount());
-        Serial.print("\t");
-
-        Serial.print("Gyro Char Count: ");
-        Serial.print(gyro_serv.characteristicCount());
-        Serial.print("\t");
-
-        Serial.print("EMG Char Count: ");
-        Serial.println(emg_serv.characteristicCount());
-      }
-
-      // Services' characteristics
-      BLECharacteristic ax = accel_serv.characteristic("861c3d04-2701-11e8-b467-0ed5f89f718b");
-      BLECharacteristic ay = accel_serv.characteristic("861c4100-2701-11e8-b467-0ed5f89f718b");
-      BLECharacteristic az = accel_serv.characteristic("861c4254-2701-11e8-b467-0ed5f89f718b");
-      BLECharacteristic gx = gyro_serv.characteristic("861c43ee-2701-11e8-b467-0ed5f89f718b");
-      BLECharacteristic gy = gyro_serv.characteristic("861c45a6-2701-11e8-b467-0ed5f89f718b");
-      BLECharacteristic gz = gyro_serv.characteristic("861c46dc-2701-11e8-b467-0ed5f89f718b");
-      BLECharacteristic emg_1 = emg_serv.characteristic("861c49d4-2701-11e8-b467-0ed5f89f718b");
-      BLECharacteristic emg_2 = emg_serv.characteristic("861c4b5a-2701-11e8-b467-0ed5f89f718b");
-
-      // MAIN Program
-      while(peripheral_BLE.connected()){
-        // Check if central has read permision
-        if (ax.canRead() && ay.canRead() && az.canRead() && gx.canRead() && gy.canRead() && gz.canRead()
-            && emg_1.canRead() && emg_2.canRead()){
-          // Check if new value was written to characteristic
-          if (true){//ax.written() && ay.written() && az.written()){
-            // Read characteristic values
-            ax.read(); ay.read(); az.read();
-            // Display data
-            Serial.print("A_x: ");
-            Serial.print(ax.floatValue());
-            Serial.print("\t");
-            Serial.print("A_y: ");
-            Serial.print(ay.floatValue());
-            Serial.print("\t");
-            Serial.print("A_z: ");
-            Serial.println(az.floatValue());
-          }
-          if (true){//gx.written() && gy.written() && gz.written()){
-            // Read characteristic values
-            gx.read(); gy.read(); gz.read();
-            // Display data
-            Serial.print("G_x: ");
-            Serial.print(gx.floatValue());
-            Serial.print("\t");
-            Serial.print("G_y: ");
-            Serial.print(gy.floatValue());
-            Serial.print("\t");
-            Serial.print("G_z: ");
-            Serial.println(gz.floatValue());
-          }
-          if (true){//emg_1.written() && emg_2.written()){
-            // Read characteristic values
-            emg_1.read(); emg_2.read();
-            // Display data
-            Serial.print("EMG 1: ");
-            Serial.print(emg_1.intValue());
-            Serial.print("\t");
-            Serial.print("EMG 2: ");
-            Serial.println(emg_2.intValue());
-          }
-          else{
-            Serial.println("New value not written yet");
-          }
+    // If peripheral has been discovered...
+    if (peripheral_BLE) {
+        // If debugging, print status update.
+        if (Serial) {
+            Serial.print("Found Peripheral: ");
+            Serial.println(peripheral_BLE.localName());
         }
-        else{
-          Serial.println("No READ Permission for ax, ay, or az");
+
+        // Connect to peripheral
+        peripheral_BLE.connect();
+
+        // If connected to peripheral...
+        if (peripheral_BLE.connected()){
+            // If debugging, print status update.
+            if (Serial) {
+                Serial.println("Periperipheral Connected");
+                Serial.println("Stopped Scanning for Peripheral");
+            }
+
+            // Stop scanning
+            BLE.stopScan();
+
+            // If debugging, print status update.
+            if (Serial) {
+                Serial.println("Discovering the Peripheral's Attributes");
+            }
+
+            // Discover the peripheral's attributes
+            peripheral_BLE.discoverAttributes();
+
+            // Peripheral services
+            BLEService controller_serv =
+            peripheral_BLE.service("861c36f6-2701-11e8-b467-0ed5f89f718b");
+
+            // Service's characteristics
+            BLECharacteristic command =
+            controller_serv.characteristic("861c3d04-2701-11e8-b467-0ed5f89f718b");
+
+            BLECharacteristic newCommand =
+            controller_serv.characteristic("861c4100-2701-11e8-b467-0ed5f89f718b");
+
+            // If debugging, print status update.
+            if (Serial) {
+                Serial.println("Entering main program loop");
+            }
+
+            // MAIN Program
+            while (peripheral_BLE.connected()) {
+                // Check if central has appropriate permissions.
+                if (command.canRead() && newCommand.canRead() &&
+                newCommand.canWrite()) {
+
+                    // Check if new command has been issued.
+                    // If so, parse command and execute it.
+                    newCommand.read();
+                    if (newCommand.intValue()) {
+                        // Read command.
+                        command.read();
+                        commandString = command.stringValue();
+
+                        // If debugging, print status update.
+                        if (Serial) {
+                            Serial.print("Received new commmand: ");
+                            Serial.println(commandString);
+
+                        }
+
+                        switch (commandString[0]) {
+                            case 'F':
+                                digitalWrite(LEFT_OUTER_MOTOR, LOW);
+                                digitalWrite(RIGHT_OUTER_MOTOR, LOW);
+                                delay(BASE_PULSE_DURATION * commandString[1]);
+                                digitalWrite(LEFT_OUTER_MOTOR, HIGH);
+                                digitalWrite(RIGHT_OUTER_MOTOR, HIGH);
+
+                                // Update newCommand characteristic.
+                                newCommand.writeInt(0);
+
+                                // If debugging, print status update.
+                                if (Serial) {
+                                    Serial.print("Walking Forward at Level ");
+                                    Serial.println(commandString[1]);
+                                }
+                            case 'B':
+                                digitalWrite(LEFT_INNER_MOTOR, LOW);
+                                digitalWrite(RIGHT_INNER_MOTOR, LOW);
+                                delay(BASE_PULSE_DURATION * commandString[1]);
+                                digitalWrite(LEFT_INNER_MOTOR, HIGH);
+                                digitalWrite(RIGHT_INNER_MOTOR, HIGH);
+
+                                // Update newCommand characteristic.
+                                newCommand.writeInt(0);
+
+                                // If debugging, print status update.
+                                if (Serial) {
+                                    Serial.print("Walking Backward at Level ");
+                                    Serial.println(commandString[1]);
+                                }
+
+                            case 'L':
+                                digitalWrite(LEFT_INNER_MOTOR, LOW);
+                                digitalWrite(LEFT_OUTER_MOTOR, LOW);
+                                delay(BASE_PULSE_DURATION);
+                                digitalWrite(LEFT_INNER_MOTOR, HIGH);
+                                digitalWrite(LEFT_OUTER_MOTOR, HIGH);
+
+                                // Update newCommand characteristic.
+                                newCommand.writeInt(0);
+
+                                // If debugging, print status update.
+                                if (Serial) {
+                                    Serial.println("Turning Left");
+                                }
+
+                            case 'R':
+                                digitalWrite(RIGHT_INNER_MOTOR, LOW);
+                                digitalWrite(RIGHT_OUTER_MOTOR, LOW);
+                                delay(BASE_PULSE_DURATION);
+                                digitalWrite(RIGHT_INNER_MOTOR, HIGH);
+                                digitalWrite(RIGHT_OUTER_MOTOR, HIGH);
+
+                                // Update newCommand characteristic.
+                                newCommand.writeInt(0);
+
+                                // If debugging, print status update.
+                                if (Serial) {
+                                    Serial.println("Turning Right");
+                                }
+
+                            case 'U':
+                                digitalWrite(LEFT_OUTER_MOTOR, LOW);
+                                digitalWrite(RIGHT_OUTER_MOTOR, LOW);
+                                delay(BASE_PULSE_DURATION);
+                                digitalWrite(LEFT_OUTER_MOTOR, HIGH);
+                                digitalWrite(RIGHT_OUTER_MOTOR, HIGH);
+                                delay(BASE_PULSE_DURATION * 0.5);
+                                digitalWrite(LEFT_OUTER_MOTOR, LOW);
+                                digitalWrite(RIGHT_OUTER_MOTOR, LOW);
+                                delay(BASE_PULSE_DURATION);
+                                digitalWrite(LEFT_OUTER_MOTOR, HIGH);
+                                digitalWrite(RIGHT_OUTER_MOTOR, HIGH);
+
+                                // Update newCommand characteristic.
+                                newCommand.writeInt(0);
+
+                                // If debugging, print status update.
+                                if (Serial) {
+                                    Serial.println("Picking Item Up");
+                                }
+
+                            case 'D':
+                                digitalWrite(LEFT_INNER_MOTOR, LOW);
+                                digitalWrite(RIGHT_INNER_MOTOR, LOW);
+                                delay(BASE_PULSE_DURATION);
+                                digitalWrite(LEFT_INNER_MOTOR, HIGH);
+                                digitalWrite(RIGHT_INNER_MOTOR, HIGH);
+                                delay(BASE_PULSE_DURATION * 0.5);
+                                digitalWrite(LEFT_INNER_MOTOR, LOW);
+                                digitalWrite(RIGHT_INNER_MOTOR, LOW);
+                                delay(BASE_PULSE_DURATION);
+                                digitalWrite(LEFT_INNER_MOTOR, HIGH);
+                                digitalWrite(RIGHT_INNER_MOTOR, HIGH);
+
+                                // Update newCommand characteristic.
+                                newCommand.writeInt(0);
+
+                                // If debugging, print status update.
+                                if (Serial) {
+                                    Serial.println("Putting Item Down");
+                                }
+
+                            case 'S':
+                            default:
+                                digitalWrite(LEFT_INNER_MOTOR, LOW);
+                                digitalWrite(LEFT_OUTER_MOTOR, LOW);
+                                digitalWrite(RIGHT_INNER_MOTOR, LOW);
+                                digitalWrite(RIGHT_OUTER_MOTOR, LOW);
+                                delay(BASE_PULSE_DURATION * 3);
+                                digitalWrite(LEFT_INNER_MOTOR, HIGH);
+                                digitalWrite(LEFT_OUTER_MOTOR, HIGH);
+                                digitalWrite(RIGHT_INNER_MOTOR, HIGH);
+                                digitalWrite(RIGHT_OUTER_MOTOR, HIGH);
+
+                                // Update newCommand characteristic.
+                                newCommand.writeInt(0);
+
+                                // If debugging, print status update.
+                                if (Serial) {
+                                    Serial.println("Stopping");
+                                }
+                        }
+                    }
+                    else {
+                        // If debugging, print status update.
+                        if (Serial) {
+                            Serial.println("New command not recieved yet");
+                        }
+                    }
+                }
+                else {
+                    // If debugging, print status update.
+                    if (Serial) {
+                        Serial.println("Improper Permissions Settings Detected!");
+                    }
+                }
+            }
         }
-      }
+        // If debugging, print status update.
+        if (Serial) {
+            Serial.println("BLE connection Lost. Scanning for peripheral...");
+        }
+
+        // Peripheral disconnected, start scanning again
+        BLE.scanForUuid("861c36f6-2701-11e8-b467-0ed5f89f718b");
     }
-    // Peripheral disconnected, start scanning again
-    BLE.scanForUuid("861c36f6-2701-11e8-b467-0ed5f89f718b");
-  }
 }
