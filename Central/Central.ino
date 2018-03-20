@@ -26,7 +26,7 @@ char commandValue;
 
 void setup() {
     // Establish Serial Connection
-    Serial.begin(115200);
+    Serial.begin(9600);
 
     // Set up pins.
     pinMode(LEFT_INNER_MOTOR, OUTPUT);
@@ -258,7 +258,6 @@ void loop() {
                                 }
                                 break;
                         }
-                        
                     }
                     else {
                         // If debugging, print status update.
@@ -274,13 +273,14 @@ void loop() {
                     }
                 }
             }
+            
+            // If debugging, print status update.
+            if (Serial) {
+                Serial.println("BLE connection Lost. Scanning for peripheral...");
+            }
+    
+            // Peripheral disconnected, start scanning again
+            BLE.scanForUuid("861c36f6-2701-11e8-b467-0ed5f89f718b");
         }
-        // If debugging, print status update.
-        if (Serial) {
-            Serial.println("BLE connection Lost. Scanning for peripheral...");
-        }
-
-        // Peripheral disconnected, start scanning again
-        BLE.scanForUuid("861c36f6-2701-11e8-b467-0ed5f89f718b");
     }
 }
