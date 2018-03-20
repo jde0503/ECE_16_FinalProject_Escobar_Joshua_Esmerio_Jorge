@@ -141,6 +141,8 @@ void loop() {
                                 if (Serial) {
                                     Serial.print("Walking Forward.");
                                 }
+                                break;
+                                
                             case 'B':
                                 digitalWrite(LEFT_INNER_MOTOR, LOW);
                                 digitalWrite(RIGHT_INNER_MOTOR, LOW);
@@ -155,6 +157,7 @@ void loop() {
                                 if (Serial) {
                                     Serial.print("Slowing Down");
                                 }
+                                break;
 
                             case 'L':
                                 digitalWrite(LEFT_INNER_MOTOR, LOW);
@@ -170,6 +173,7 @@ void loop() {
                                 if (Serial) {
                                     Serial.println("Turning Left");
                                 }
+                                break;
 
                             case 'R':
                                 digitalWrite(RIGHT_INNER_MOTOR, LOW);
@@ -185,6 +189,7 @@ void loop() {
                                 if (Serial) {
                                     Serial.println("Turning Right");
                                 }
+                                break;
 
                             case 'U':
                                 digitalWrite(LEFT_OUTER_MOTOR, LOW);
@@ -206,6 +211,7 @@ void loop() {
                                 if (Serial) {
                                     Serial.println("Picking Item Up");
                                 }
+                                break;
 
                             case 'D':
                                 digitalWrite(LEFT_INNER_MOTOR, LOW);
@@ -227,6 +233,7 @@ void loop() {
                                 if (Serial) {
                                     Serial.println("Putting Item Down");
                                 }
+                                break;
 
                             case 'S':
                             default:
@@ -247,6 +254,7 @@ void loop() {
                                 if (Serial) {
                                     Serial.println("Stopping");
                                 }
+                                break;
                         }
                     }
                     else {
