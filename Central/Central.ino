@@ -26,7 +26,7 @@ char commandValue;
 
 void setup() {
     // Establish Serial Connection
-    Serial.begin(9600);
+    Serial.begin(115200);
 
     // Set up pins.
     pinMode(LEFT_INNER_MOTOR, OUTPUT);
@@ -44,12 +44,14 @@ void setup() {
     // Initiliaze the BLE hardware
     BLE.begin();
 
+    while (!Serial) {} // Comment out before deploying.
+    
     // If debugging, print status update.
     if (Serial) {
         Serial.println("BLE Central Initialized");
         Serial.println("Central scanning for Peripheral UUID...");
     }
-    // Scan/look for a Peripheralyy
+    // Scan/look for a Peripheral
     BLE.scanForUuid("861c36f6-2701-11e8-b467-0ed5f89f718b");
     //******************************************************************
 }
@@ -139,7 +141,7 @@ void loop() {
 
                                 // If debugging, print status update.
                                 if (Serial) {
-                                    Serial.print("Walking Forward.");
+                                    Serial.println("Walking Forward.");
                                 }
                                 break;
                                 
@@ -155,7 +157,7 @@ void loop() {
 
                                 // If debugging, print status update.
                                 if (Serial) {
-                                    Serial.print("Slowing Down");
+                                    Serial.println("Slowing Down");
                                 }
                                 break;
 
@@ -256,6 +258,7 @@ void loop() {
                                 }
                                 break;
                         }
+                        
                     }
                     else {
                         // If debugging, print status update.

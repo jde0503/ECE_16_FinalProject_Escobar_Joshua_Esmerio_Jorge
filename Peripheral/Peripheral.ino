@@ -1,5 +1,6 @@
-/******************************************************************************
-* Author: Joshua Escobar, PID: A11606542
+/*****************************************************************************
+* Authors: Joshua Escobar, PID: A11606542
+*          Jorge Esmerio, PID: A11459879
 * Class:  ECE 16
 * Lab: Final Project
 *
@@ -11,153 +12,126 @@
 
 // Include necessary libraries.
 #include <CurieBLE.h>
-#include <CurieIMU.h>
+#include "CurieIMU.h"
 #include "CurieTimerOne.h"
 
-// Global variables
-volatile bool hasRead = false;   // toggle to print
-float ax, ay, az, gx, gy, gz;    // accel/gyro values
-int EMG_data1, EMG_data2;                    // EMG value
+// Declare and initialize global variables.
+int baud_rate = 115200;
+int timer = 100000;
+int x, y, z;
+int left_calf, right_calf;
+bool changeSpeed = false;
+char new_instruction, old_instruction;
 
-//************************************** BLE Code ****************************************
-//BLEPeripheral my_BLE_Periph;  // BLE Peripheral Device (the board you're programming)
-BLEService accel_service("861c36f6-2701-11e8-b467-0ed5f89f718b"); // BLE ACCEL Service
-BLEService gyro_service("861c398a-2701-11e8-b467-0ed5f89f718b");   // BLE GYRO Service
-BLEService emg_service("861c3b6a-2701-11e8-b467-0ed5f89f718b");     // BLE EMG Service
-// Set up characteristics
-// BLE Accelerometer Service Characteristics
-BLEFloatCharacteristic accel_characteristic_x("861c3d04-2701-11e8-b467-0ed5f89f718b", BLERead | BLEWrite);
-BLEFloatCharacteristic accel_characteristic_y("861c4100-2701-11e8-b467-0ed5f89f718b", BLERead | BLEWrite);
-BLEFloatCharacteristic accel_characteristic_z("861c4254-2701-11e8-b467-0ed5f89f718b", BLERead | BLEWrite);
-// BLE Gyroscope Service Characteristics
-BLEFloatCharacteristic gyro_characteristic_x("861c43ee-2701-11e8-b467-0ed5f89f718b", BLERead | BLEWrite);
-BLEFloatCharacteristic gyro_characteristic_y("861c45a6-2701-11e8-b467-0ed5f89f718b", BLERead | BLEWrite);
-BLEFloatCharacteristic gyro_characteristic_z("861c46dc-2701-11e8-b467-0ed5f89f718b", BLERead | BLEWrite);
-// BLE EMG Service Characteristics
-BLEIntCharacteristic emg_characteristic_1("861c49d4-2701-11e8-b467-0ed5f89f718b", BLERead | BLEWrite);
-BLEIntCharacteristic emg_characteristic_2("861c4b5a-2701-11e8-b467-0ed5f89f718b", BLERead | BLEWrite);
-//****************************************************************************************
+BLEService final_service("861c36f6-2701-11e8-b467-0ed5f89f718b");
+
+BLECharCharacteristic final_command("861c3d04-2701-11e8-b467-0ed5f89f718b", BLERead | BLEWrite);
+BLEIntCharacteristic new_command("861c4100-2701-11e8-b467-0ed5f89f718b", BLERead | BLEWrite);
+
+void read_instruction(){
+    // Reads from accelerometer sensor.
+    CurieIMU.readAccelerometer(x, y, z);
+
+    // Read EMG data.
+    left_calf = analogRead(A0);
+    right_calf = analogRead(A1);
+}
 
 void setup() {
-  // Establish Serial Connection
-  Serial.begin(9600);
-  // Wait for connection to establish
-  //while(!Serial);
-  //Serial.println("Serial Established.");
-  // Initialize IMU
-  CurieIMU.begin();
-  CurieIMU.setGyroRange(250);
-  CurieIMU.setAccelerometerRange(2);
-  //Serial.println("IMU Initialized.");
+    // Serial using baud rate.
+    Serial.begin(baud_rate);
+    // while(!Serial){}
 
-  //**************************** BLE Code ****************************
-  // Initiliaze the BLE hardware
-  BLE.begin();
-  // set advertised local name and service UUID:
-  BLE.setLocalName("Josh & Jorge BLE");
-  BLE.setAdvertisedServiceUuid(gyro_service.uuid());
-  // add characteristics to services
-  accel_service.addCharacteristic(accel_characteristic_x);
-  accel_service.addCharacteristic(accel_characteristic_y);
-  accel_service.addCharacteristic(accel_characteristic_z);
-  gyro_service.addCharacteristic(gyro_characteristic_x);
-  gyro_service.addCharacteristic(gyro_characteristic_y);
-  gyro_service.addCharacteristic(gyro_characteristic_z);
-  emg_service.addCharacteristic(emg_characteristic_1);
-  emg_service.addCharacteristic(emg_characteristic_2);
-  // add service to peripheral
-  BLE.addService(accel_service);
-  BLE.addService(gyro_service);
-  BLE.addService(emg_service);
-  // set initial characteristic values
-  accel_characteristic_x.writeFloat(float(1.0));
-  accel_characteristic_y.writeFloat(float(1.0));
-  accel_characteristic_z.writeFloat(float(1.0));
-  gyro_characteristic_x.writeFloat(float(1.0));
-  gyro_characteristic_y.writeFloat(float(1.0));
-  gyro_characteristic_z.writeFloat(float(1.0));
-  emg_characteristic_1.writeInt(1);
-  emg_characteristic_2.writeInt(1);
-  // BEGIN ADVERTISING THE BLE
-  //Serial.println("BLE being advertised");
-  BLE.advertise();
-  //******************************************************************
+    // Initialize accelerometer sensor.
+    CurieIMU.begin();
+    CurieIMU.setAccelerometerRange(2);
 
-  // Start Interupt, at 10Hz
-  CurieTimerOne.start(100000, &my_sample);
-  //Serial.println("Interupt Started.");
-}
-
-// loop() function used to establish and reestablish BLE connection
-void loop() {
-  //******************************* BLE Code *******************************
-  // look for a BLE central to connect to
-  BLEDevice central_BLE = BLE.central();
-  // if connection established between Peripheral and Central
-  if (central_BLE) {
-    //Serial.print("Connected to central: ");
-    // Stop advertising BLE
-    BLE.stopAdvertise();
-    //Serial.println("Stopped advertising BLE ");
-
-    // while the Peripheral is still connected to Central, write data
-    while (central_BLE.connected()) {
-      // write to characteristics, if sampled
-      if (hasRead) {
-        accel_characteristic_x.writeFloat(ax);
-        accel_characteristic_y.writeFloat(ay);
-        accel_characteristic_z.writeFloat(az);
-        gyro_characteristic_x.writeFloat(gx);
-        gyro_characteristic_y.writeFloat(gy);
-        gyro_characteristic_z.writeFloat(gz);
-        emg_characteristic_1.writeInt(EMG_data1);
-        emg_characteristic_2.writeInt(EMG_data2);
-        hasRead = false;
-
-        if (Serial) {
-            Serial.print("A_x: ");
-            Serial.print(accel_characteristic_x.floatValue());
-            Serial.print("\t");
-            Serial.print("A_y: ");
-            Serial.print(accel_characteristic_y.floatValue());
-            Serial.print("\t");
-            Serial.print("A_z: ");
-            Serial.println(accel_characteristic_z.floatValue());
-
-            Serial.print("G_x: ");
-            Serial.print(gyro_characteristic_x.floatValue());
-            Serial.print("\t");
-            Serial.print("G_y: ");
-            Serial.print(gyro_characteristic_y.floatValue());
-            Serial.print("\t");
-            Serial.print("G_z: ");
-            Serial.println(gyro_characteristic_z.floatValue());
-
-            Serial.print("EMG 1: ");
-            Serial.print(emg_characteristic_1.intValue());
-            Serial.print("\t");
-            Serial.print("EMG 2: ");
-            Serial.println(emg_characteristic_2.intValue());
-        }
-      }
-    }
-    // When the central disconnects, print it out:
-    //Serial.println("Disconnected from central");
-    // Advertise BLE again
-    //Serial.println("BLE being advertised");
+    BLE.begin();
+    BLE.setLocalName("Josh & Jorge Final Project");
+    BLE.setAdvertisedServiceUuid(final_service.uuid());
+    final_service.addCharacteristic(final_command);
+    final_service.addCharacteristic(new_command);
+    BLE.addService(final_service);
+    final_command.writeChar('S');
+    new_command.writeInt(0);
+    if (Serial) Serial.println("BLE being advertised");
     BLE.advertise();
-  }
-  //************************************************************************
+
+    // Begin sampling
+    CurieTimerOne.start(timer, &read_instruction);
+
+    if (Serial) Serial.println("Interupt Started.");
 }
 
+void loop() {
+    BLEDevice central_BLE = BLE.central();
 
-// Sampling function (ISR)
-void my_sample(){
-  // Sample Accel, Gyro, then EMG
-  CurieIMU.readAccelerometerScaled(ax, ay, az);
-  CurieIMU.readGyroScaled(gx, gy, gz);
-  EMG_data1 = analogRead(A0);
-  EMG_data2 = analogRead(A1);
-  // Toggle print ON
-  hasRead = true;
+    // If connection established between Peripheral and Central
+    if (central_BLE) {
+
+        if (Serial) Serial.print("Connected to central: ");
+
+        // Stop advertising BLE
+        BLE.stopAdvertise();
+        if (Serial) Serial.println("Stopped advertising BLE ");
+
+        // while the Peripheral is still connected to Central, write data
+        while (central_BLE.connected()) {
+
+            if( new_command.intValue()==0 ){
+
+                // Pick up item
+                if( (x<-14500) )
+                new_instruction = 'U';
+
+                // Go Forward
+                if(x>14500)
+                new_instruction = 'F';
+
+                // Turn Right
+                if(y>14500)
+                new_instruction = 'R';
+
+                // Turn Left
+                if(y<-14500)
+                new_instruction = 'L';
+
+                // Stop
+                if(z>14500)
+                new_instruction = 'S';
+
+                // Drop Item
+                if(z<-14500)
+                new_instruction = 'D';
+
+                // Slow down
+                if( (left_calf>700)  && ((old_instruction=='F') || (old_instruction=='B')) ) {
+                    new_instruction = 'B';
+                    changeSpeed = true;
+                }
+
+                // Speed Up
+                if( (right_calf>700)  && ((old_instruction=='F') || (old_instruction=='B')) ) {
+                    new_instruction = 'F';
+                    changeSpeed = true;
+                }
+            }
+
+
+            // If orientation has changed, update BLE command.
+            if((new_instruction != old_instruction) || (changeSpeed)){
+                final_command.writeChar(new_instruction);
+                new_command.writeInt(1);
+                changeSpeed = false;
+            }
+
+            // Saves current orientation to compare to orientation from next sample
+            old_instruction = new_instruction;
+        }
+        //When the central disconnects, print it out:
+        if (Serial) Serial.println("Disconnected from central");
+        // Advertise BLE again
+        if (Serial) Serial.println("BLE being advertised");
+        BLE.advertise();
+    }
 }
