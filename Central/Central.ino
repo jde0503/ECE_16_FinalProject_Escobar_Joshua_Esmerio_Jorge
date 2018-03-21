@@ -1,5 +1,3 @@
-#include <CurieBLE.h>
-
 /******************************************************************************
 * Authors: Joshua Escobar, PID: A11606542
 *          Jorge Esmerio, PID: A11459879
@@ -45,7 +43,7 @@ void setup() {
     BLE.begin();
 
     while (!Serial) {} // Comment out before deploying.
-    
+
     // If debugging, print status update.
     if (Serial) {
         Serial.println("BLE Central Initialized");
@@ -141,10 +139,10 @@ void loop() {
 
                                 // If debugging, print status update.
                                 if (Serial) {
-                                    Serial.println("Walking Forward.");
+                                    Serial.println("Walking Forward or Speeding Up");
                                 }
                                 break;
-                                
+
                             case 'B':
                                 digitalWrite(LEFT_INNER_MOTOR, LOW);
                                 digitalWrite(RIGHT_INNER_MOTOR, LOW);
@@ -273,12 +271,12 @@ void loop() {
                     }
                 }
             }
-            
+
             // If debugging, print status update.
             if (Serial) {
                 Serial.println("BLE connection Lost. Scanning for peripheral...");
             }
-    
+
             // Peripheral disconnected, start scanning again
             BLE.scanForUuid("861c36f6-2701-11e8-b467-0ed5f89f718b");
         }
