@@ -25,6 +25,7 @@ int A_x, A_y, A_z;
 float leftCalfRaw, rightCalfRaw;
 float leftCalfScaled, rightCalfScaled;
 volatile bool newSample = false;
+String data;
 
 BLEService commandService("861c36f6-2701-11e8-b467-0ed5f89f718b");
 
@@ -54,11 +55,11 @@ void setup() {
     BLE.begin();
     BLE.setLocalName("Josh & Jorge Final Project");
     BLE.setAdvertisedServiceUuid(commandService.uuid());
-    final_service.addCharacteristic(command);
-    final_service.addCharacteristic(newCommandStatus);
+    commandService.addCharacteristic(command);
+    commandService.addCharacteristic(newCommandStatus);
     BLE.addService(commandService);
-    final_command.writeChar('S');
-    new_command.writeInt(0);
+    command.writeChar('S');
+    newCommandStatus.writeInt(0);
     BLE.advertise();
 
     // Begin sampling
@@ -89,21 +90,24 @@ void loop() {
             // Send any new sensor data to python via serial.
             if (newSample) {
                 // Scale EMG readings before transmission.
-                leftCalfScaled = ((float(map(LeftCalfRaw, 0, 1023, 0, 33)) *
+                leftCalfScaled = ((float(map(leftCalfRaw, 0, 1023, 0, 33)) *
                                  100.0) - 1500) / (2800.0);
                 rightCalfScaled = ((float(map(rightCalfRaw, 0, 1023, 0, 33)) *
                                  100.0) - 1500) / (2800.0);
 
-                // Send data.
-                Serial.print(A_x);
-                Serial.print("\t");
-                Serial.print(A_y);
-                Serial.print("\t");
-                Serial.print(A_z);
-                Serial.print("\t");
-                Serial.print(leftCalfScaled);
-                Serial.print("\t");
-                Serial.println(rightCalfScaled);
+                if (Serial) {
+                    Serial.print(A_x);
+                    Serial.print("\t");
+                    Serial.print(A_y);
+                    Serial.print("\t");
+                    Serial.print(A_z);
+                    Serial.print("\t");
+                    Serial.print(leftCalfScaled);
+                    Serial.print("\t");
+                    Serial.println(rightCalfScaled);
+    
+                    newSample = false;
+                }
             }
         }
         // Advertise BLE again
